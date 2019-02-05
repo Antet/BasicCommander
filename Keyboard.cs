@@ -1,48 +1,74 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace BasicCommander
 {
-    class Keyboard
-    {
-        static IntPtr _hookID = IntPtr.Zero;
+	class Keyboard
+	{
+		public static void Initialize()
+		{
+			//Console.TreatControlCAsInput = true;
 
-        public static void Initialize()
-        {
-            _hookID = SetHook(HookCallback);
-            UnhookWindowsHookEx(_hookID);
-        }
+			CreateKeyboardThread();
+		}
 
-        static IntPtr SetHook(LowLevelKeyboardProc proc) => SetWindowsHookEx(13, proc, GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0);
+		static void CreateKeyboardThread()
+		{
+			Thread th = new Thread(KeyboardUpdate);
+			th.Name = "VideoThread";
+			th.Start();
+		}
 
-        delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+		private static void KeyboardUpdate()
+		{
+			while (true)
+			{
+				KeyHandler(Console.ReadKey(true));
 
-        static IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
-        {
-            if (wParam == (IntPtr)0x0100)
-            {
-                ShowWindow(Process.GetCurrentProcess().MainWindowHandle, 2);
-                return (IntPtr)1;
-            }
+				Thread.Yield();
+			}
+		}
 
-            return CallNextHookEx(_hookID, nCode, wParam, lParam);
-        }
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool UnhookWindowsHookEx(IntPtr hhk);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        static extern IntPtr GetModuleHandle(string lpModuleName);
-
-        [DllImport("user32.dll")]
-        static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-    }
+		private static void KeyHandler(ConsoleKeyInfo pressedKey)
+		{
+			switch (pressedKey.Modifiers)
+			{
+				case ConsoleModifiers.Control:
+					switch (pressedKey.Key)
+					{
+						case ConsoleKey.X:
+							Environment.Exit(0);
+							break;
+					}
+					break;
+				case ConsoleModifiers.Alt:
+					switch (pressedKey.Key)
+					{
+						case ConsoleKey.F1:
+							Output.ChangeBackGroundColor(ConsoleLibrary.CharAttributes.empty);
+							Console.ForegroundColor = ConsoleColor.DarkGreen;
+							break;
+						case ConsoleKey.F2:
+							Output.ChangeBackGroundColor(ConsoleLibrary.CharAttributes.background_blue);
+							Console.ForegroundColor = ConsoleColor.White;
+							break;
+					}
+					break;
+				default:
+					switch (pressedKey.Key)
+					{
+						case ConsoleKey.Tab:
+							Output.MoveCursorBy(5, 0);
+							break;
+						case ConsoleKey.UpArrow:
+							Output.MoveCursorBy(0, 1);
+							break;
+						case ConsoleKey.DownArrow:
+							Output.MoveCursorBy(0, -1);
+							break;
+					}
+					break;
+			}
+		}
+	}
 }

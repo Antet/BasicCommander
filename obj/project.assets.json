@@ -694,11 +694,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Antonio\\Desktop\\BasicCommander\\BasicCommander.csproj",
+      "projectUniqueName": "c:\\Users\\Antonio\\Desktop\\BasicCommander\\BasicCommander.csproj",
       "projectName": "BasicCommander",
-      "projectPath": "C:\\Users\\Antonio\\Desktop\\BasicCommander\\BasicCommander.csproj",
+      "projectPath": "c:\\Users\\Antonio\\Desktop\\BasicCommander\\BasicCommander.csproj",
       "packagesPath": "C:\\Users\\Antonio\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Antonio\\Desktop\\BasicCommander\\obj\\",
+      "outputPath": "c:\\Users\\Antonio\\Desktop\\BasicCommander\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
