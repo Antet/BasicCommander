@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Threading;
+using static BasicCommander.ConsoleLibrary;
+using static BasicCommander.Navigation;
+using static BasicCommander.Output;
 
 namespace BasicCommander
 {
@@ -7,7 +10,7 @@ namespace BasicCommander
 	{
 		public static void Initialize()
 		{
-			//Console.TreatControlCAsInput = true;
+			Console.TreatControlCAsInput = true;
 
 			CreateKeyboardThread();
 		}
@@ -33,38 +36,67 @@ namespace BasicCommander
 		{
 			switch (pressedKey.Modifiers)
 			{
+				// Control keys
 				case ConsoleModifiers.Control:
 					switch (pressedKey.Key)
 					{
+						case ConsoleKey.S:
+							SwitchToScreen(Screen.FirstSearch);
+							break;
 						case ConsoleKey.X:
 							Environment.Exit(0);
 							break;
 					}
 					break;
+				// Alt keys
 				case ConsoleModifiers.Alt:
 					switch (pressedKey.Key)
 					{
 						case ConsoleKey.F1:
-							Output.ChangeBackGroundColor(ConsoleLibrary.CharAttributes.empty);
-							Console.ForegroundColor = ConsoleColor.DarkGreen;
+							Output.ChangeBackgroundColor(System.Drawing.Color.Black);
+							Output.ChangeTextColor(System.Drawing.Color.FromArgb(255, 192, 192, 192));
 							break;
 						case ConsoleKey.F2:
-							Output.ChangeBackGroundColor(ConsoleLibrary.CharAttributes.background_blue);
-							Console.ForegroundColor = ConsoleColor.White;
+							Output.ChangeBackgroundColor(System.Drawing.Color.DarkBlue);
+							Output.ChangeTextColor(System.Drawing.Color.Black);
 							break;
 					}
 					break;
+				// No modifiers
 				default:
 					switch (pressedKey.Key)
 					{
+						case ConsoleKey.F1:
+							SwitchToScreen(Screen.First);
+							break;
+						case ConsoleKey.F2:
+							LabelCollection.ChangeDirectory("C:\\Users\\Antonio\\");
+							break;
+						case ConsoleKey.F3:
+							LabelCollection.ChangeDirectory("C:\\Users\\Antonio\\Desktop\\");
+							break;
+						case ConsoleKey.Enter:
+							HighlightRect(2, 3, 75);
+							break;
+						case ConsoleKey.Escape:
+							SwitchToScreen(Screen.Toolbar);
+							break;
 						case ConsoleKey.Tab:
-							Output.MoveCursorBy(5, 0);
+							SwitchToScreen(Screen.Second);
 							break;
 						case ConsoleKey.UpArrow:
-							Output.MoveCursorBy(0, 1);
+							MoveCursorBy(0, 1);
 							break;
 						case ConsoleKey.DownArrow:
-							Output.MoveCursorBy(0, -1);
+							MoveCursorBy(0, -1);
+							break;
+						case ConsoleKey.RightArrow:
+							ButtonCollection.Button nextButton = ButtonCollection.GetNextButton();
+							SetCursor(nextButton.position.X, nextButton.position.Y);
+							break;
+						case ConsoleKey.LeftArrow:
+							ButtonCollection.Button prevButton = ButtonCollection.GetPreviousButton();
+							SetCursor(prevButton.position.X, prevButton.position.Y);
 							break;
 					}
 					break;

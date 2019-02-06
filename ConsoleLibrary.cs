@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Runtime.InteropServices;
+using System.Drawing;
 
 namespace BasicCommander
 {
@@ -46,7 +47,7 @@ namespace BasicCommander
 			IntPtr hConsoleOutput,
 			ushort wAttribute,
 			uint nLength,
-			COORD dwWriteCoord,
+			Coord dwWriteCoord,
 			out uint lpNumberOfAttrsWritten
 			);
 
@@ -56,7 +57,7 @@ namespace BasicCommander
 			IntPtr hConsoleOutput,
 			char cCharacter,
 			uint nLength,
-			COORD dwWriteCoord,
+			Coord dwWriteCoord,
 			out uint lpNumberOfCharsWritten
 			);
 
@@ -130,7 +131,7 @@ namespace BasicCommander
 
 		// http://pinvoke.net/default.aspx/kernel32/GetConsoleFontSize.html
 		[DllImport("kernel32.dll", SetLastError = true)]
-		public static extern COORD GetConsoleFontSize(
+		public static extern Coord GetConsoleFontSize(
 			IntPtr hConsoleOutput,
 			Int32 nFont
 			);
@@ -171,14 +172,14 @@ namespace BasicCommander
 		[DllImport("kernel32.dll", SetLastError = true)]
 		public static extern bool GetConsoleScreenBufferInfo(
 			IntPtr hConsoleOutput,
-			out CONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo
+			out ConsoleScreenBufferInfo lpConsoleScreenBufferInfo
 			);
 
 		// http://pinvoke.net/default.aspx/kernel32/GetConsoleScreenBufferInfoEx.html
 		[DllImport("kernel32.dll", SetLastError = true)]
 		public static extern bool GetConsoleScreenBufferInfoEx(
 			IntPtr hConsoleOutput,
-			ref CONSOLE_SCREEN_BUFFER_INFO_EX ConsoleScreenBufferInfo
+			ref ConsoleScreenBufferInfoEx ConsoleScreenBufferInfo
 			);
 
 		// http://pinvoke.net/default.aspx/kernel32/GetConsoleSelectionInfo.html
@@ -208,7 +209,7 @@ namespace BasicCommander
 
 		// http://pinvoke.net/default.aspx/kernel32/GetLargestConsoleWindowSize.html
 		[DllImport("kernel32.dll", SetLastError = true)]
-		public static extern COORD GetLargestConsoleWindowSize(
+		public static extern Coord GetLargestConsoleWindowSize(
 			IntPtr hConsoleOutput
 			);
 
@@ -267,9 +268,9 @@ namespace BasicCommander
 		[DllImport("kernel32.dll", SetLastError = true)]
 		public static extern bool ReadConsoleOutput(
 			IntPtr hConsoleOutput,
-			[Out] CHAR_INFO[] lpBuffer,
-			COORD dwBufferSize,
-			COORD dwBufferCoord,
+			[Out] CharInfo[] lpBuffer,
+			Coord dwBufferSize,
+			Coord dwBufferCoord,
 			ref Rect lpReadRegion
 			);
 
@@ -279,7 +280,7 @@ namespace BasicCommander
 			IntPtr hConsoleOutput,
 			[Out] ushort[] lpAttribute,
 			uint nLength,
-			COORD dwReadCoord,
+			Coord dwReadCoord,
 			out uint lpNumberOfAttrsRead
 			);
 
@@ -289,7 +290,7 @@ namespace BasicCommander
 			IntPtr hConsoleOutput,
 			[Out] StringBuilder lpCharacter,
 			uint nLength,
-			COORD dwReadCoord,
+			Coord dwReadCoord,
 			out uint lpNumberOfCharsRead
 			);
 
@@ -299,8 +300,8 @@ namespace BasicCommander
 			IntPtr hConsoleOutput,
 		   [In] ref Rect lpScrollRectangle,
 			IntPtr lpClipRectangle,
-		   COORD dwDestinationOrigin,
-			[In] ref CHAR_INFO lpFill
+		   Coord dwDestinationOrigin,
+			[In] ref CharInfo lpFill
 			);
 
 		// http://pinvoke.net/default.aspx/kernel32/SetConsoleActiveScreenBuffer.html
@@ -333,7 +334,7 @@ namespace BasicCommander
 		[DllImport("kernel32.dll", SetLastError = true)]
 		public static extern bool SetConsoleCursorPosition(
 			IntPtr hConsoleOutput,
-		   COORD dwCursorPosition
+		   Coord dwCursorPosition
 			);
 
 		// http://pinvoke.net/default.aspx/kernel32/SetConsoleDisplayMode.html
@@ -341,7 +342,7 @@ namespace BasicCommander
 		public static extern bool SetConsoleDisplayMode(
 			IntPtr ConsoleOutput,
 			uint Flags,
-			out COORD NewScreenBufferDimensions
+			out Coord NewScreenBufferDimensions
 			);
 
 		// http://pinvoke.net/default.aspx/kernel32/SetConsoleHistoryInfo.html
@@ -367,14 +368,14 @@ namespace BasicCommander
 		[DllImport("kernel32.dll", SetLastError = true)]
 		public static extern bool SetConsoleScreenBufferInfoEx(
 			IntPtr ConsoleOutput,
-			CONSOLE_SCREEN_BUFFER_INFO_EX ConsoleScreenBufferInfoEx
+			ConsoleScreenBufferInfoEx ConsoleScreenBufferInfoEx
 			);
 
 		// http://pinvoke.net/default.aspx/kernel32/SetConsoleScreenBufferSize.html
 		[DllImport("kernel32.dll", SetLastError = true)]
 		public static extern bool SetConsoleScreenBufferSize(
 			IntPtr hConsoleOutput,
-			COORD dwSize
+			Coord dwSize
 			);
 
 		// http://pinvoke.net/default.aspx/kernel32/SetConsoleTextAttribute.html
@@ -438,9 +439,9 @@ namespace BasicCommander
 		[DllImport("kernel32.dll", SetLastError = true)]
 		public static extern bool WriteConsoleOutput(
 			IntPtr hConsoleOutput,
-			CHAR_INFO[,] lpBuffer,
-			COORD dwBufferSize,
-			COORD dwBufferCoord,
+			CharInfo[,] lpBuffer,
+			Coord dwBufferSize,
+			Coord dwBufferCoord,
 			ref Rect lpWriteRegion
 			);
 
@@ -450,7 +451,7 @@ namespace BasicCommander
 			IntPtr hConsoleOutput,
 			ushort[] lpAttribute,
 			uint nLength,
-			COORD dwWriteCoord,
+			Coord dwWriteCoord,
 			out uint lpNumberOfAttrsWritten
 			);
 
@@ -460,17 +461,17 @@ namespace BasicCommander
 			IntPtr hConsoleOutput,
 			string lpCharacter,
 			uint nLength,
-			COORD dwWriteCoord,
+			Coord dwWriteCoord,
 			out uint lpNumberOfCharsWritten
 			);
 
 		[StructLayout(LayoutKind.Sequential)]
-		public struct COORD
+		public struct Coord
 		{
 			public short X;
 			public short Y;
 
-			public COORD(int x, int y)
+			public Coord(int x, int y)
 			{
 				X = (short)x;
 				Y = (short)y;
@@ -493,26 +494,26 @@ namespace BasicCommander
 			}
 		}
 
-		public struct CONSOLE_SCREEN_BUFFER_INFO
+		public struct ConsoleScreenBufferInfo
 		{
 
-			public COORD dwSize;
-			public COORD dwCursorPosition;
+			public Coord dwSize;
+			public Coord dwCursorPosition;
 			public short wAttributes;
 			public Rect srWindow;
-			public COORD dwMaximumWindowSize;
+			public Coord dwMaximumWindowSize;
 
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
-		public struct CONSOLE_SCREEN_BUFFER_INFO_EX
+		public struct ConsoleScreenBufferInfoEx
 		{
 			public uint cbSize;
-			public COORD dwSize;
-			public COORD dwCursorPosition;
+			public Coord dwSize;
+			public Coord dwCursorPosition;
 			public short wAttributes;
 			public Rect srWindow;
-			public COORD dwMaximumWindowSize;
+			public Coord dwMaximumWindowSize;
 
 			public ushort wPopupAttributes;
 			public bool bFullscreenSupported;
@@ -520,37 +521,29 @@ namespace BasicCommander
 			[MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
 			public COLORREF[] ColorTable;
 
-			public static CONSOLE_SCREEN_BUFFER_INFO_EX Create()
+			public static ConsoleScreenBufferInfoEx Create()
 			{
-				return new CONSOLE_SCREEN_BUFFER_INFO_EX { cbSize = 96 };
+				return new ConsoleScreenBufferInfoEx { cbSize = 96 };
 			}
 		}
-
-		//[StructLayout(LayoutKind.Sequential)]
-		//struct COLORREF
-		//{
-		//    public byte R;
-		//    public byte G;
-		//    public byte B;
-		//}
 
 		[StructLayout(LayoutKind.Sequential)]
 		public struct COLORREF
 		{
 			public uint ColorDWORD;
 
-			public COLORREF(System.Drawing.Color color)
+			public COLORREF(Color color)
 			{
 				ColorDWORD = (uint)color.R + (((uint)color.G) << 8) + (((uint)color.B) << 16);
 			}
 
-			public System.Drawing.Color GetColor()
+			public Color GetColor()
 			{
-				return System.Drawing.Color.FromArgb((int)(0x000000FFU & ColorDWORD),
+				return Color.FromArgb((int)(0x000000FFU & ColorDWORD),
 				   (int)(0x0000FF00U & ColorDWORD) >> 8, (int)(0x00FF0000U & ColorDWORD) >> 16);
 			}
 
-			public void SetColor(System.Drawing.Color color)
+			public void SetColor(Color color)
 			{
 				ColorDWORD = (uint)color.R + (((uint)color.G) << 8) + (((uint)color.B) << 16);
 			}
@@ -559,7 +552,7 @@ namespace BasicCommander
 		public struct CONSOLE_FONT_INFO
 		{
 			public int nFont;
-			public COORD dwFontSize;
+			public Coord dwFontSize;
 		}
 
 		[StructLayout(LayoutKind.Explicit)]
@@ -601,7 +594,7 @@ namespace BasicCommander
 		[StructLayout(LayoutKind.Sequential)]
 		public struct MOUSE_EVENT_RECORD
 		{
-			public COORD dwMousePosition;
+			public Coord dwMousePosition;
 			public uint dwButtonState;
 			public uint dwControlKeyState;
 			public uint dwEventFlags;
@@ -609,11 +602,11 @@ namespace BasicCommander
 
 		public struct WINDOW_BUFFER_SIZE_RECORD
 		{
-			public COORD dwSize;
+			public Coord dwSize;
 
 			public WINDOW_BUFFER_SIZE_RECORD(short x, short y)
 			{
-				dwSize = new COORD();
+				dwSize = new Coord();
 				dwSize.X = x;
 				dwSize.Y = y;
 			}
@@ -635,7 +628,7 @@ namespace BasicCommander
 		// so we want to use LayoutKind.Explicit to mimic it as closely
 		// as we can
 		[StructLayout(LayoutKind.Explicit)]
-		public struct CHAR_INFO
+		public struct CharInfo
 		{
 			[FieldOffset(0)]
 			char UnicodeChar;
@@ -644,31 +637,79 @@ namespace BasicCommander
 			[FieldOffset(2)] //2 bytes seems to work properly
 			UInt16 Attributes;
 
-			public CHAR_INFO(char _char, CharAttributes attributes = CharAttributes.empty)
+			public CharInfo(char _char, CharAttributes attributes = CharAttributes.empty)
 			{
 				UnicodeChar = _char;
 				AsciiChar = _char;
 				Attributes = (ushort)attributes;
 			}
+			public CharInfo(char _char, ushort color)
+			{
+				UnicodeChar = _char;
+				AsciiChar = _char;
+				Attributes = color;
+			}
 
-			public static readonly CHAR_INFO Empty = new CHAR_INFO('\0', CharAttributes.empty);
+			public static readonly CharInfo Empty = new CharInfo('\0', CharAttributes.empty);
+		}
+
+		public static CharInfo[,] StringToCharInfo(string _string, CharAttributes attributes = CharAttributes.empty)
+		{
+			int x = 0, y = 0;
+			//CHANGE IF YOU WANT TO HAVE EXTRA LINES
+			CharInfo[,] charReturn = new CharInfo[_string.Length, 1];
+
+			foreach (char _char in _string.ToCharArray())
+			{
+				if (_char != '\n')
+					charReturn[x++, y] = new CharInfo(_char, attributes);
+				else
+				{
+					y++;
+					continue;
+				}
+
+			}
+
+			return charReturn;
 		}
 
 		public enum CharAttributes
 		{
 			empty = 0x0000,
-			foreground_blue = 0x0001,
-			foreground_green = 0x0002,
-			foreground_red = 0x0004,
-			foreground_white = 0x0007,
-			foreground_intensity = 0x0008,
-			background_blue = 0x0010,
-			background_green = 0x0020,
-			background_red = 0x0040,
-			background_purple = 0x0050,
-			background_gray = 0x0070,
-			background_white = 0x0080,
-			background_intensity = 0x0080,
+
+			foreground_darkblue = 0x0001,
+			foreground_darkgreen = 0x0002,
+			foreground_darkcyan = 0x0002,
+			foreground_darkred = 0x0004,
+			foreground_darkpink = 0x0005,
+			foreground_darkyellow = 0x0006,
+			foreground_normal = 0x0007,
+			foreground_gray = 0x0008,
+			foreground_blue = 0x0009,
+			foreground_green = 0x000A,
+			foreground_cyan = 0x000B,
+			foreground_red = 0x000C,
+			foreground_pink = 0x000D,
+			foreground_yellow = 0x000E,
+			foreground_white = 0x000F,
+
+			background_darkblue = 0x0010,
+			background_darkgreen = 0x0020,
+			background_darkcyan = 0x0020,
+			background_darkred = 0x0040,
+			background_darkpink = 0x0050,
+			background_darkyellow = 0x0060,
+			background_normal = 0x0070,
+			background_gray = 0x0080,
+			background_blue = 0x0090,
+			background_green = 0x00A0,
+			background_cyan = 0x00B0,
+			background_red = 0x00C0,
+			background_pink = 0x00D0,
+			background_yellow = 0x00E0,
+			background_white = 0x00F0,
+
 			common_lvb_leading_byte = 0x0100,
 			common_lvb_trailing_byte = 0x0200,
 			common_lvb_grid_horizontal = 0x0400,
@@ -698,7 +739,7 @@ namespace BasicCommander
 		public struct CONSOLE_SELECTION_INFO
 		{
 			uint Flags;
-			COORD SelectionAnchor;
+			Coord SelectionAnchor;
 			Rect Selection;
 
 			// Flags values:

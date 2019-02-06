@@ -9,6 +9,9 @@ namespace BasicCommander
 		{
 			Keyboard.Initialize();
 			Output.Initialize();
+			ButtonCollection.Initialize();
+			LabelCollection.Initialize();
+			Navigation.Initialize();
 
 			CreateMainThread();
 		}

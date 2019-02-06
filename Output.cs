@@ -4,31 +4,36 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using static BasicCommander.ConsoleLibrary;
+using static BasicCommander.Navigation;
 
 namespace BasicCommander
 {
 	class Output
 	{
-		static IntPtr screenBuffer;
-		static Rect toDo_FindOutWhatThisIs;
-		static COORD cursorPosition = new COORD(0, 0);
+		public static IntPtr screenBuffer;
+		static ConsoleScreenBufferInfoEx consoleInfo;
+
+		static int messageCounter = 0;
 
 		public static void Initialize()
 		{
-			CreateVideoThread();
-
-			Console.Clear();
 			screenBuffer = CreateConsoleScreenBuffer(0xC0000000, 0x00000003, IntPtr.Zero, 1, IntPtr.Zero);
-			SetConsoleScreenBufferSize(screenBuffer, new COORD(160, 60));
-
-			Rect screen = new Rect(0, 0, 159, 59);
-
-			SetConsoleWindowInfo(screenBuffer, true, ref screen);
+			SetConsoleScreenBufferSize(screenBuffer, new Coord(161, 60));
 			SetConsoleActiveScreenBuffer(screenBuffer);
 
-			GenerateMainScreen();
-			//WriteToConsole("This is a message", 50, 50);
+			Rect windowSize = new Rect(0, 0, 160, 59);
+			SetConsoleWindowInfo(screenBuffer, true, ref windowSize);
+
+			GetConsoleScreenBufferInfoEx(screenBuffer, ref consoleInfo);
+			SetConsoleTitle("Basic Commander");
+
+			// Draw borders
+			DrawLine(Screen.First, 80, 0, 80, 57);
+			DrawLine(Screen.First, 0, 1, 161, 1);
+			DrawLine(Screen.First, 0, 57, 161, 57);
+			CreateVideoThread();
 		}
 
 		static void CreateVideoThread()
@@ -42,65 +47,89 @@ namespace BasicCommander
 		{
 			while (true)
 			{
-				Console.Clear();
-
-				Thread.Yield();
 			}
 		}
 
-		static void GenerateMainScreen()
+		public static void Message(string message)
 		{
-			//column, row
-			CHAR_INFO[,] charactersToWrite = new CHAR_INFO[,] { {new CHAR_INFO('F', CharAttributes.background_gray), new CHAR_INFO('i', CharAttributes.background_gray),
-																 new CHAR_INFO('l', CharAttributes.background_gray), new CHAR_INFO('e', CharAttributes.background_gray),
-																 CHAR_INFO.Empty,
-																 new CHAR_INFO('E', CharAttributes.background_gray), new CHAR_INFO('d', CharAttributes.background_gray),
-																 new CHAR_INFO('i', CharAttributes.background_gray), new CHAR_INFO('t', CharAttributes.background_gray)} };
+			WriteToConsole("Nr. " + messageCounter + ": " + message, 120, 58);
+		}
 
-			toDo_FindOutWhatThisIs = new Rect { Left = 0, Right = (short)(charactersToWrite.GetLength(1) - 1), Top = 0, Bottom = (short)(charactersToWrite.GetLength(0) - 1) };
-			WriteConsoleOutput(screenBuffer,
-			charactersToWrite,
-			new COORD((short)charactersToWrite.GetLength(1), (short)charactersToWrite.GetLength(0)),
-			new COORD(0, 0),
-			ref toDo_FindOutWhatThisIs
+		public static void ChangeBackgroundColor(System.Drawing.Color backgroundColor)
+		{
+			consoleInfo.ColorTable[0].SetColor(backgroundColor);
+
+			SetConsoleScreenBufferInfoEx(screenBuffer, consoleInfo);
+		}
+
+		public static void ChangeTextColor(System.Drawing.Color textColor)
+		{
+			consoleInfo.ColorTable[15].SetColor(textColor);
+
+			SetConsoleScreenBufferInfoEx(screenBuffer, consoleInfo);
+		}
+
+		/*public static void WriteToConsole(Screen screen, string _string, int x = 0, int y = 0, bool highlight = false)
+		{
+			if (!highlight)
+			{
+				foreach (char _char in _string.ToCharArray())
+					WriteConsoleOutputCharacter(screenBuffer, _char.ToString(), 1, new Coord(x++, y), out var nrCharsWritten);
+			}
+			else
+			{
+				foreach (char _char in _string.ToCharArray())
+					WriteConsoleOutputCharacter(screenBuffer, _char.ToString(), 1, new Coord(x++, y), out var nrCharsWritten);
+			}
+		}*/
+
+		static void DrawLine(Screen screen, int startx, int starty, int endx, int endy)
+		{
+			for (int i = startx; i < endx; i++)
+				WriteConsoleOutputCharacter(screenBuffer, ('X').ToString(), 1, new Coord(i, starty), out var empty0);
+			for (int i = starty; i < endy; i++)
+				WriteConsoleOutputCharacter(screenBuffer, ('X').ToString(), 1, new Coord(startx, i), out var empty0);
+		}
+
+		public static void HighlightRect(int x, int y, int length) => FillConsoleOutputAttribute(screenBuffer, (ushort)CharAttributes.background_gray, 75, new Coord(x, y), out var z);
+		public static void DeHighlightRect(int x, int y, int length) => FillConsoleOutputAttribute(screenBuffer, (ushort)CharAttributes.foreground_white, 75, new Coord(x, y), out var z);
+
+		public static void WriteToConsole(string _string, int x, int y, CharAttributes attributes = CharAttributes.foreground_white)
+		{
+			CharInfo[,] charactersToWrite = new CharInfo[_string.Length, 1];
+
+			charactersToWrite = StringToCharInfo(_string, attributes);
+
+			Rect writeRect = new Rect { Left = (short)x, Right = 160, Top = (short)y, Bottom = 59 };
+			WriteConsoleOutput(screenBuffer, charactersToWrite,
+			new Coord((short)_string.Length, (short)1),
+			new Coord(0, 0),
+			ref writeRect
 			);
 		}
 
-		public static void ChangeBackGroundColor(CharAttributes backgroundColor)
+		public static void DrawRect(int left, int top, int right, int bottom)
 		{
-			CHAR_INFO[,] charactersToWrite = new CHAR_INFO[60, 160];
-			for (int i = 0; i < 60 * 160; i++) charactersToWrite[i % 60, i / 60] = new CHAR_INFO('\0', backgroundColor);
-			//Enumerable.Repeat(new CHAR_INFO('x', backgroundColor), 13).ToArray();
+			CharInfo[,] charactersToWrite = new CharInfo[right - left, bottom - top];
+			for (int i = 0; i < (right - left) * (bottom - top); i++)
+				charactersToWrite[i % (right - left), i / (right - left)] = new CharInfo('\0', CharAttributes.foreground_white);
 
-			toDo_FindOutWhatThisIs = new Rect { Left = 0, Right = (short)(charactersToWrite.GetLength(1) - 1), Top = 0, Bottom = (short)(charactersToWrite.GetLength(0) - 1) };
-			WriteConsoleOutput(screenBuffer,
-			charactersToWrite,
-			new COORD((short)charactersToWrite.GetLength(1), (short)charactersToWrite.GetLength(0)),
-			new COORD(0, 0),
-			ref toDo_FindOutWhatThisIs
+			Rect writeRect = new Rect { Left = (short)left, Right = 160, Top = (short)top, Bottom = 59 };
+			WriteConsoleOutput(screenBuffer, charactersToWrite,
+			new Coord((short)right - left, (short)bottom - top),
+			new Coord(0, 0),
+			ref writeRect
 			);
-
-			GenerateMainScreen();
 		}
 
-		static void WriteToConsole(string _string, short x = 0, short y = 0)
+		public static void ClearScreen(Screen screenToClear)
 		{
-			foreach (char _char in _string.ToCharArray())
-				WriteConsoleOutputCharacter(screenBuffer, _char.ToString(), 1, new COORD(x++, y), out var empty1);
-		}
-
-		public static void MoveCursor(int x, int y)
-		{
-			SetConsoleCursorPosition(screenBuffer, new COORD(x, y));
-			cursorPosition.X += (short)x;
-			cursorPosition.Y += (short)y;
-		}
-
-		public static void MoveCursorBy(int x, int y)
-		{
-			SetConsoleCursorPosition(screenBuffer, new COORD(x + cursorPosition.X, -y + cursorPosition.Y));
-			cursorPosition.X += (short)x;
-			cursorPosition.Y += (short)-y;
+			switch (screenToClear)
+			{
+				case Screen.First:
+					DrawRect(0, 2, 80, 55);
+					break;
+			}
 		}
 	}
 }

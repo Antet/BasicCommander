@@ -356,4 +356,7 @@ healthchecksdb
 # Ignore all local history of files
 .history
 
+### Custom files ###
+*.bat
+
 # End of https://www.gitignore.io/api/csharp,visualstudiocode
