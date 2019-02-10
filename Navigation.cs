@@ -1,116 +1,108 @@
 using System;
+using System.Collections.Generic;
 using static BasicCommander.ConsoleLibrary;
-using static BasicCommander.Output;
+using static BasicCommander.Program;
+using static BasicCommander.ContextHelper;
 
 namespace BasicCommander
 {
-	static class Navigation
+	class Navigation
 	{
-		static Coord cursorPosition = new Coord(0, 0);
-		static Screen currentScreen = Screen.First;
+		Rect windowBounds = new Rect { };
+		public Rect toolbarBounds = new Rect(0, 0, 80, 0);
+		Rect firstBounds = new Rect(1, 4, 78, 55);
+		Rect secondBounds = new Rect(82, 4, 159, 56);
 
-		static Rect windowBounds = new Rect { };
-		static Rect toolbarBounds = new Rect(0, 0, 80, 0);
-		static Rect firstBounds = new Rect(1, 4, 78, 56);
+		public event EventHandler<CursorEventArgs> cursorMoved;
+		public event EventHandler<CursorEventArgs> outOfBounds;
 
-		public static void Initialize()
+		public Navigation()
+		{
+			windowBounds = output.consoleInfo.windowSize;
+		}
+
+		public void OnCursorMoved(Coord newCoord)
+		{
+			if (cursorMoved != null && outOfBounds != null)
+			{
+				// WriteCursorPosition(newCoord);
+				cursorMoved(this, new CursorEventArgs(newCoord));
+				outOfBounds(this, new CursorEventArgs(newCoord));
+			}
+		}
+
+		public bool CheckIfCurrentScreenEquals(Context screen) => GetCurrentScreen().Equals(screen);
+
+		public void SwapScreen()
+		{
+			if (IsInside(firstList.GetBounds(), GetCursorPosition()))
+				SwitchToScreen(Context.Second);
+			else if (IsInside(secondList.GetBounds(), GetCursorPosition()))
+				SwitchToScreen(Context.First);
+		}
+
+		public Context GetCurrentScreen()
+		{
+			Coord cursorPosition = GetCursorPosition();
+
+			if (IsInside(firstList.GetBounds(), cursorPosition))
+				return Context.First;
+			else if (IsInside(secondList.GetBounds(), cursorPosition))
+				return Context.Second;
+			else if (IsInside(toolbarBounds, cursorPosition))
+				return Context.Toolbar;
+
+			return Context.Full;
+		}
+
+		void WriteCursorPosition(Coord coord) => output.WriteToConsole($"{coord.x:D2}, {coord.y:D2}", new Coord(155, 59));
+
+		public void SetCursor(Coord coord)
+		{
+			if (!IsInside(windowBounds, coord))
+				return;
+			SetConsoleCursorPosition(output.screenBuffer, coord);
+
+			OnCursorMoved(coord);
+		}
+
+		public void MoveCursorBy(int x, int y)
+		{
+			Coord cursorPosition = GetCursorPosition();
+			Coord newCursorPosition = new Coord(x + cursorPosition.x, y + cursorPosition.y);
+
+			if (!IsInside(windowBounds, newCursorPosition) || !IsInside(GetCurrentList().GetBounds(), newCursorPosition))
+			{
+				OnCursorMoved(newCursorPosition);
+				return;
+			}
+			SetConsoleCursorPosition(output.screenBuffer, newCursorPosition);
+
+			OnCursorMoved(newCursorPosition);
+		}
+
+		public Coord GetCursorPosition()
 		{
 			ConsoleScreenBufferInfoEx consoleInfo = ConsoleScreenBufferInfoEx.Create();
-			GetConsoleScreenBufferInfoEx(screenBuffer, ref consoleInfo);
-			windowBounds = consoleInfo.srWindow;
 
-			SwitchToScreen(Screen.First);
+			GetConsoleScreenBufferInfoEx(output.screenBuffer, ref consoleInfo);
+
+			return consoleInfo.cursorPosition;
 		}
 
-		public static void SetCursor(int x, int y)
+		public ScrollableList GetCurrentList()
 		{
-			// if (!CheckIfCanMove(x, y))
-			// 	return;
-
-			SetConsoleCursorPosition(screenBuffer, new Coord(x, y));
-			cursorPosition.X = (short)x;
-			cursorPosition.Y = (short)y;
-			SetCurrentScreen(x, y);
-			LabelCollection.LabelHighlightCheck();
+			if (GetCurrentScreen().Equals(Context.First))
+				return Program.firstList;
+			else if (GetCurrentScreen().Equals(Context.Second))
+				return Program.secondList;
+			else
+				return null;
 		}
 
-		public static void MoveCursorBy(int x, int y)
+		public void SelectNextButton()
 		{
-			if (!CheckIfCanMove(x + cursorPosition.X, -y + cursorPosition.Y))
-				return;
-
-			SetConsoleCursorPosition(screenBuffer, new Coord(x + cursorPosition.X, -y + cursorPosition.Y));
-			cursorPosition.X += (short)x;
-			cursorPosition.Y += (short)-y;
-			SetCurrentScreen(cursorPosition.X, cursorPosition.Y);
-			LabelCollection.LabelHighlightCheck();
-		}
-
-		static bool CheckIfCanMove(int x, int y)
-		{
-			if (x < windowBounds.Left || x > windowBounds.Right || y < windowBounds.Top || y > windowBounds.Bottom)
-				return false;
-			switch (GetCurrentScreen())
-			{
-				case Screen.Toolbar:
-					if (x < toolbarBounds.Left || x > toolbarBounds.Right || y < toolbarBounds.Top || y > toolbarBounds.Bottom)
-						return false;
-					break;
-				case Screen.First:
-					if (x < firstBounds.Left || x > firstBounds.Right || y < firstBounds.Top || y > firstBounds.Bottom)
-						return false;
-					break;
-				default:
-					break;
-			}
-			return true;
-		}
-
-		public static Coord GetCursorPosition()
-		{
-			return cursorPosition;
-		}
-
-		public static Screen GetCurrentScreen() => currentScreen;
-
-		static void SetCurrentScreen(int x, int y)
-		{
-			WriteToConsole(string.Format("{0:D2}, {1:D2}", cursorPosition.X, cursorPosition.Y), 155, 59);
-
-			if (x < 80 && y == 0)
-				currentScreen = Screen.Toolbar;
-			else if (x < 80 && y == 3)
-				currentScreen = Screen.FirstSearch;
-			else if (x < 80 && y > 3 && y < 57)
-				currentScreen = Screen.First;
-		}
-
-		public static void SwitchToScreen(Screen switchScreen)
-		{
-			switch (switchScreen)
-			{
-				case Screen.Toolbar:
-					SetCursor(0, 0);
-					break;
-				case Screen.First:
-					SetCursor(1, 4);
-					break;
-				case Screen.FirstSearch:
-					SetCursor(2, 2);
-					break;
-				default:
-					break;
-			}
-		}
-
-		public enum Screen
-		{
-			First,
-			FirstSearch,
-			Second,
-			SecondSearch,
-			Toolbar,
-			Shortcuts
+			// SetCursor();
 		}
 	}
 }

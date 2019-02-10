@@ -358,5 +358,8 @@ healthchecksdb
 
 ### Custom files ###
 *.bat
+bin/
+obj/
+*.csproj
 
 # End of https://www.gitignore.io/api/csharp,visualstudiocode

@@ -1,31 +1,29 @@
 ﻿using System;
-using System.Threading;
+using System.Collections.Generic;
+using static BasicCommander.ConsoleLibrary;
 
 namespace BasicCommander
 {
 	class Program
 	{
-		static void Main(string[] args)
+		public static Output output;
+		public static Navigation navigation;
+		public static ScrollableList firstList;
+		public static ScrollableList secondList;
+
+		public static void Main(string[] args)
 		{
-			Keyboard.Initialize();
-			Output.Initialize();
-			ButtonCollection.Initialize();
-			LabelCollection.Initialize();
-			Navigation.Initialize();
+			output = new Output();
+			navigation = new Navigation();
+			ContextHelper.SwitchToScreen(Context.First);
+			Keyboard input = new Keyboard();
 
-			CreateMainThread();
-		}
+			Button[] buttons = new Button[] { new Button("File", new Coord(0, 0)),
+											  new Button("Edit", new Coord(5, 0)),
+											  new Button("Options", new Coord(10, 0)) };
 
-		static void CreateMainThread()
-		{
-			Thread th = new Thread(Update);
-			th.Name = "MainThread";
-			//th.Start();
-		}
-
-		static void Update()
-		{
-
+			firstList = new ScrollableList(Context.First);
+			secondList = new ScrollableList(Context.Second);
 		}
 	}
 }

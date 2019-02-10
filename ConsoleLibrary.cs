@@ -269,8 +269,8 @@ namespace BasicCommander
 		public static extern bool ReadConsoleOutput(
 			IntPtr hConsoleOutput,
 			[Out] CharInfo[] lpBuffer,
-			Coord dwBufferSize,
-			Coord dwBufferCoord,
+			Coord bufferSize,
+			Coord bufferCoord,
 			ref Rect lpReadRegion
 			);
 
@@ -440,8 +440,8 @@ namespace BasicCommander
 		public static extern bool WriteConsoleOutput(
 			IntPtr hConsoleOutput,
 			CharInfo[,] lpBuffer,
-			Coord dwBufferSize,
-			Coord dwBufferCoord,
+			Coord bufferSize,
+			Coord bufferCoord,
 			ref Rect lpWriteRegion
 			);
 
@@ -468,15 +468,19 @@ namespace BasicCommander
 		[StructLayout(LayoutKind.Sequential)]
 		public struct Coord
 		{
-			public short X;
-			public short Y;
+			public short x;
+			public short y;
 
-			public Coord(int x, int y)
+			public Coord(int X, int Y)
 			{
-				X = (short)x;
-				Y = (short)y;
+				x = (short)X;
+				y = (short)Y;
 			}
+
+			public static bool operator ==(Coord coord1, Coord coord2) => coord1.x == coord2.x && coord1.y == coord2.y;
+			public static bool operator !=(Coord coord1, Coord coord2) => !(coord1 == coord2);
 		}
+
 
 		public struct Rect
 		{
@@ -497,11 +501,11 @@ namespace BasicCommander
 		public struct ConsoleScreenBufferInfo
 		{
 
-			public Coord dwSize;
-			public Coord dwCursorPosition;
-			public short wAttributes;
-			public Rect srWindow;
-			public Coord dwMaximumWindowSize;
+			public Coord screenBufferSize;
+			public Coord cursorPosition;
+			public short attributes;
+			public Rect windowSize;
+			public Coord maximumWindowSize;
 
 		}
 
@@ -509,11 +513,11 @@ namespace BasicCommander
 		public struct ConsoleScreenBufferInfoEx
 		{
 			public uint cbSize;
-			public Coord dwSize;
-			public Coord dwCursorPosition;
-			public short wAttributes;
-			public Rect srWindow;
-			public Coord dwMaximumWindowSize;
+			public Coord screenBufferSize;
+			public Coord cursorPosition;
+			public short attributes;
+			public Rect windowSize;
+			public Coord maximumWindowSize;
 
 			public ushort wPopupAttributes;
 			public bool bFullscreenSupported;
@@ -607,8 +611,8 @@ namespace BasicCommander
 			public WINDOW_BUFFER_SIZE_RECORD(short x, short y)
 			{
 				dwSize = new Coord();
-				dwSize.X = x;
-				dwSize.Y = y;
+				dwSize.x = x;
+				dwSize.y = y;
 			}
 		}
 
@@ -627,7 +631,7 @@ namespace BasicCommander
 		//CHAR_INFO struct, which was a union in the old days
 		// so we want to use LayoutKind.Explicit to mimic it as closely
 		// as we can
-		[StructLayout(LayoutKind.Explicit)]
+		[StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode)]
 		public struct CharInfo
 		{
 			[FieldOffset(0)]
@@ -656,7 +660,7 @@ namespace BasicCommander
 		public static CharInfo[,] StringToCharInfo(string _string, CharAttributes attributes = CharAttributes.empty)
 		{
 			int x = 0, y = 0;
-			//CHANGE IF YOU WANT TO HAVE EXTRA LINES
+			// CHANGE IF YOU WANT TO HAVE EXTRA LINES
 			CharInfo[,] charReturn = new CharInfo[_string.Length, 1];
 
 			foreach (char _char in _string.ToCharArray())

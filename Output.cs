@@ -1,23 +1,17 @@
 using System;
-using System.Threading;
-using System.Runtime.InteropServices;
-using System.Diagnostics;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Drawing;
 using static BasicCommander.ConsoleLibrary;
-using static BasicCommander.Navigation;
 
 namespace BasicCommander
 {
-	class Output
+    class Output
 	{
-		public static IntPtr screenBuffer;
-		static ConsoleScreenBufferInfoEx consoleInfo;
+		public readonly IntPtr screenBuffer;
+		public readonly ConsoleScreenBufferInfoEx consoleInfo;
 
-		static int messageCounter = 0;
+		int messageCounter = 0;
 
-		public static void Initialize()
+		public Output()
 		{
 			screenBuffer = CreateConsoleScreenBuffer(0xC0000000, 0x00000003, IntPtr.Zero, 1, IntPtr.Zero);
 			SetConsoleScreenBufferSize(screenBuffer, new Coord(161, 60));
@@ -26,108 +20,82 @@ namespace BasicCommander
 			Rect windowSize = new Rect(0, 0, 160, 59);
 			SetConsoleWindowInfo(screenBuffer, true, ref windowSize);
 
+			consoleInfo = ConsoleScreenBufferInfoEx.Create();
 			GetConsoleScreenBufferInfoEx(screenBuffer, ref consoleInfo);
 			SetConsoleTitle("Basic Commander");
 
 			// Draw borders
-			DrawLine(Screen.First, 80, 0, 80, 57);
-			DrawLine(Screen.First, 0, 1, 161, 1);
-			DrawLine(Screen.First, 0, 57, 161, 57);
-			CreateVideoThread();
+			DrawLine(80, 0, 80, 57);
+			DrawLine(0, 1, 161, 1);
+			DrawLine(0, 57, 161, 57);
 		}
 
-		static void CreateVideoThread()
+		// Character writing
+		public void Message(object message) => WriteToConsole($"Nr. {messageCounter++}: {message}", new Coord(1, 58));
+
+		public void WriteToConsole(string _string, Coord coord, CharAttributes attributes = CharAttributes.foreground_normal)
 		{
-			Thread th = new Thread(VideoUpdate);
-			th.Name = "VideoThread";
-			//th.Start();
+			Rect writeRect = new Rect { Left = coord.x, Right = 160, Top = coord.y, Bottom = 59 };
+
+			WriteConsoleOutput(screenBuffer,
+							   StringToCharInfo(_string, attributes),
+							   new Coord((short)_string.Length, (short)1),
+							   new Coord(0, 0),
+							   ref writeRect
+							   );
 		}
 
-		static void VideoUpdate()
-		{
-			while (true)
-			{
-			}
-		}
-
-		public static void Message(string message)
-		{
-			WriteToConsole("Nr. " + messageCounter + ": " + message, 120, 58);
-		}
-
-		public static void ChangeBackgroundColor(System.Drawing.Color backgroundColor)
-		{
-			consoleInfo.ColorTable[0].SetColor(backgroundColor);
-
-			SetConsoleScreenBufferInfoEx(screenBuffer, consoleInfo);
-		}
-
-		public static void ChangeTextColor(System.Drawing.Color textColor)
-		{
-			consoleInfo.ColorTable[15].SetColor(textColor);
-
-			SetConsoleScreenBufferInfoEx(screenBuffer, consoleInfo);
-		}
-
-		/*public static void WriteToConsole(Screen screen, string _string, int x = 0, int y = 0, bool highlight = false)
-		{
-			if (!highlight)
-			{
-				foreach (char _char in _string.ToCharArray())
-					WriteConsoleOutputCharacter(screenBuffer, _char.ToString(), 1, new Coord(x++, y), out var nrCharsWritten);
-			}
-			else
-			{
-				foreach (char _char in _string.ToCharArray())
-					WriteConsoleOutputCharacter(screenBuffer, _char.ToString(), 1, new Coord(x++, y), out var nrCharsWritten);
-			}
-		}*/
-
-		static void DrawLine(Screen screen, int startx, int starty, int endx, int endy)
+		public void DrawLine(int startx, int starty, int endx, int endy)
 		{
 			for (int i = startx; i < endx; i++)
-				WriteConsoleOutputCharacter(screenBuffer, ('X').ToString(), 1, new Coord(i, starty), out var empty0);
+				SetAttributeRect(new Coord(i, starty), 1, CharAttributes.background_white);
 			for (int i = starty; i < endy; i++)
-				WriteConsoleOutputCharacter(screenBuffer, ('X').ToString(), 1, new Coord(startx, i), out var empty0);
+				SetAttributeRect(new Coord(startx, i), 1, CharAttributes.background_white);
 		}
 
-		public static void HighlightRect(int x, int y, int length) => FillConsoleOutputAttribute(screenBuffer, (ushort)CharAttributes.background_gray, 75, new Coord(x, y), out var z);
-		public static void DeHighlightRect(int x, int y, int length) => FillConsoleOutputAttribute(screenBuffer, (ushort)CharAttributes.foreground_white, 75, new Coord(x, y), out var z);
+		// Rect drawing
+		public void HighlightRect(Coord coord, int length) => FillConsoleOutputAttribute(screenBuffer, (ushort)CharAttributes.background_gray, (uint)length, coord, out var z);
+		public void DeHighlightRect(Coord coord, int length) => FillConsoleOutputAttribute(screenBuffer, (ushort)CharAttributes.foreground_normal, (uint)length, coord, out var z);
+		public void SetAttributeRect(Coord coord, int length, CharAttributes attribute) => FillConsoleOutputAttribute(screenBuffer, (ushort)attribute, (uint)length, coord, out var z);
 
-		public static void WriteToConsole(string _string, int x, int y, CharAttributes attributes = CharAttributes.foreground_white)
-		{
-			CharInfo[,] charactersToWrite = new CharInfo[_string.Length, 1];
-
-			charactersToWrite = StringToCharInfo(_string, attributes);
-
-			Rect writeRect = new Rect { Left = (short)x, Right = 160, Top = (short)y, Bottom = 59 };
-			WriteConsoleOutput(screenBuffer, charactersToWrite,
-			new Coord((short)_string.Length, (short)1),
-			new Coord(0, 0),
-			ref writeRect
-			);
-		}
-
-		public static void DrawRect(int left, int top, int right, int bottom)
+		public void DrawRect(int left, int top, int right, int bottom)
 		{
 			CharInfo[,] charactersToWrite = new CharInfo[right - left, bottom - top];
 			for (int i = 0; i < (right - left) * (bottom - top); i++)
 				charactersToWrite[i % (right - left), i / (right - left)] = new CharInfo('\0', CharAttributes.foreground_white);
 
 			Rect writeRect = new Rect { Left = (short)left, Right = 160, Top = (short)top, Bottom = 59 };
+
 			WriteConsoleOutput(screenBuffer, charactersToWrite,
-			new Coord((short)right - left, (short)bottom - top),
-			new Coord(0, 0),
-			ref writeRect
-			);
+							   new Coord((short)right - left, (short)bottom - top),
+							   new Coord(0, 0),
+							   ref writeRect
+							   );
 		}
 
-		public static void ClearScreen(Screen screenToClear)
+		public void ChangeBackgroundColor(Color backgroundColor)
+		{
+			consoleInfo.ColorTable[0].SetColor(backgroundColor);
+
+			SetConsoleScreenBufferInfoEx(screenBuffer, consoleInfo);
+		}
+
+		public void ChangeTextColor(Color textColor)
+		{
+			consoleInfo.ColorTable[15].SetColor(textColor);
+
+			SetConsoleScreenBufferInfoEx(screenBuffer, consoleInfo);
+		}
+
+		public void ClearScreen(Context screenToClear)
 		{
 			switch (screenToClear)
 			{
-				case Screen.First:
-					DrawRect(0, 2, 80, 55);
+				case Context.First:
+					DrawRect(1, 4, 78, 56);
+					break;
+				case Context.Second:
+					DrawRect(82, 4, 159, 56);
 					break;
 			}
 		}
